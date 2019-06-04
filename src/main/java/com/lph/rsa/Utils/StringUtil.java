@@ -269,4 +269,12 @@ public class StringUtil extends StringUtils
      }
      return strbuffer.toString();
   }
+
+
+
+  public static void main(String[] args){
+      String nonceStr = createNonceStr(10);
+
+      System.err.println(nonceStr);
+  }
 }

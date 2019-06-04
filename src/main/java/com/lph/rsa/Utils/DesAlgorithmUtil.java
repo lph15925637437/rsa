@@ -14,35 +14,37 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 
+
 /**
- * @Description:
- * @Author: dingjl
- * @Date: 2018年4月16日
- **/
+ * des工具类
+ * @author: lph
+ * @date:  2019/6/4 9:34
+ * @version V1.0
+ */
 public class DesAlgorithmUtil {
-	private static final String CHARSET = "UTF-8";
+
 	
 	private static final String Algorithm = "DESede";
 
 	public static String encrypt(String plainText, String secretKey) throws Exception {
-		DESKeySpec keySpec = new DESKeySpec(secretKey.getBytes(CHARSET));
+		DESKeySpec keySpec = new DESKeySpec(secretKey.getBytes(ConfigureEncryptAndDecrypt.CHAR_ENCODING));
 		SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DES");
 		SecretKey key = keyFactory.generateSecret(keySpec);
-		Cipher cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
+		Cipher cipher = Cipher.getInstance(ConfigureEncryptAndDecrypt.DES_ALGORITHM);
 		cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(keySpec.getKey()));
-		byte[] result = cipher.doFinal(plainText.getBytes(CHARSET));
+		byte[] result = cipher.doFinal(plainText.getBytes(ConfigureEncryptAndDecrypt.CHAR_ENCODING));
 		return new BASE64Encoder().encode(result);
 	}
 
 	public static String decrypt(String cipherText, String secretKey) throws Exception {
-		DESKeySpec keySpec = new DESKeySpec(secretKey.getBytes(CHARSET));
+		DESKeySpec keySpec = new DESKeySpec(secretKey.getBytes(ConfigureEncryptAndDecrypt.CHAR_ENCODING));
 		SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DES");
 		SecretKey key = keyFactory.generateSecret(keySpec);
-		Cipher cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
+		Cipher cipher = Cipher.getInstance(ConfigureEncryptAndDecrypt.DES_ALGORITHM);
 		cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(keySpec.getKey()));
 
 		byte[] result = cipher.doFinal(new BASE64Decoder().decodeBuffer(cipherText));
-		return new String(result, CHARSET);
+		return new String(result, ConfigureEncryptAndDecrypt.CHAR_ENCODING);
 	}
 
 	//3DES加密
@@ -98,7 +100,7 @@ public class DesAlgorithmUtil {
 		final DESedeKeySpec dks = new DESedeKeySpec(key.getBytes());//Base64.decodeBase64(key)
 		final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DESede");
 		final SecretKey securekey = keyFactory.generateSecret(dks);
-		final Cipher cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+		final Cipher cipher = Cipher.getInstance(ConfigureEncryptAndDecrypt.DESECB_ALGORITHM);
 		cipher.init(Cipher.DECRYPT_MODE, securekey, new IvParameterSpec(offset.getBytes()));
 		
 		final byte[] retByte = cipher.doFinal(Base64.decodeBase64(src));
@@ -130,7 +132,7 @@ public class DesAlgorithmUtil {
 	 }
 	 private static byte[] build3DesKey(String keyStr) throws UnsupportedEncodingException {
 	  byte[] key = new byte[24]; // 声明一个24位的字节数组，默认里面都是0
-	  byte[] temp = keyStr.getBytes(CHARSET); // 将字符串转成字节数组
+	  byte[] temp = keyStr.getBytes(ConfigureEncryptAndDecrypt.CHAR_ENCODING); // 将字符串转成字节数组
 	  if (key.length > temp.length) {
 	   System.arraycopy(temp, 0, key, 0, temp.length);
 	  } else {
