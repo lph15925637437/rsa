@@ -4,18 +4,19 @@ import com.lph.rsa.Utils.HzsunHashMap;
 import com.lph.rsa.Utils.HzsunSignature;
 import com.lph.rsa.constant.HzsunConstants;
 
-/**  
-* @Description:  
- * @Author: dingjl  
-* @Date: 2018年4月19日  
-**/
-public class RSASignVerification implements SignVerification{
+
+/**
+ * @version V1.0
+ * @author: lph
+ * @date: 2019/8/23 15:40
+ */
+public class RSASignVerification implements SignVerification {
 
     @Override
     public boolean verfiy(HzsunHashMap map, String sign, String publicKey, String charset, String signType) {
-                //TODO  
+        //TODO
         map.remove(HzsunConstants.SIGN);
-        String content= HzsunSignature.getSignContent(map);
+        String content = HzsunSignature.getSignContent(map);
         return HzsunSignature.rsaCheck(content, sign, publicKey, charset, signType);
     }
 

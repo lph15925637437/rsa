@@ -22,9 +22,12 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
+
 /**
- * 
- * @author runzhi
+ *
+ * @author: lph
+ * @date:  2019/8/23 15:39
+ * @version V1.0
  */
 public class HzsunSignature {
 

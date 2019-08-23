@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 
 /**
  * 身份证工具类
- * Created by 51NB on 15/11/22.
  */
 public class IdcardUtils {
 

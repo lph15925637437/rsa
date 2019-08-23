@@ -1,9 +1,12 @@
 package com.lph.rsa.exception;
-/**  
-* @Description:  
- * @Author: dingjl  
-* @Date: 2018年4月12日  
-**/
+
+
+/**
+ *
+ * @author: lph
+ * @date:  2019/8/23 15:42
+ * @version V1.0
+ */
 public enum ServiceErrorEnum {
     SYS_VERIFYCODENINVALID("S10001","密码错误!"),
     ELEMENT_IS_REPEAT("S10002", "集合中有重复元素"),
