@@ -7,6 +7,7 @@ package com.lph.rsa.exception;
 public enum ServiceErrorEnum {
     SYS_VERIFYCODENINVALID("S10001","密码错误!"),
     ELEMENT_IS_REPEAT("S10002", "集合中有重复元素"),
+    E_Sign_Error("S10003","签名出错了!"),
     ; 
     
     private String errorCode;
