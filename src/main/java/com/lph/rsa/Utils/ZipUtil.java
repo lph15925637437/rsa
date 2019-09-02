@@ -7,7 +7,9 @@ import org.apache.tools.zip.ZipOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -20,27 +22,25 @@ public class ZipUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(ZipUtil.class);
 
-    private static byte[] byteBuffer = new byte[1024] ;
+    private static byte[] byteBuffer = new byte[1024];
 
     /**
      * 压缩文件或路径
      *
-     * @param zip
-     *          压缩的目的地址
-     * @param srcFiles
-     *          压缩的源文件
+     * @param zip      压缩的目的地址
+     * @param srcFiles 压缩的源文件
      */
-    public static boolean zipFile(String zip , List<File> srcFiles){
+    public static boolean zipFile(String zip, List<File> srcFiles) {
         ZipOutputStream zipOut = null;
         try {
-            if (zip.endsWith(".zip") || zip.endsWith(".ZIP")){
-                zipOut = new ZipOutputStream(new FileOutputStream(new File(zip))) ;
+            if (zip.endsWith(".zip") || zip.endsWith(".ZIP")) {
+                zipOut = new ZipOutputStream(new FileOutputStream(new File(zip)));
                 zipOut.setEncoding("GBK");
-                for( File file : srcFiles){
-                    handlerFile(zip, zipOut , file , "");
+                for (File file : srcFiles) {
+                    handlerFile(zip, zipOut, file, "");
                 }
                 zipOut.close();
-            }else{
+            } else {
                 throw new RuntimeException("目标文件不是zip文件,无法压缩");
             }
         } catch (Exception e) {
@@ -55,26 +55,52 @@ public class ZipUtil {
 
     /**
      *
-     * @param zip 压缩的目的地址
+     * @param zip 默认压缩包名称
+     * @param response
+     * @param srcFilePath 待压缩原文件路径
+     */
+    public static void downloadZipFiles(String zip, HttpServletResponse response, List<String> srcFilePath) {
+        ZipOutputStream zipOut = null;
+        try {
+            if (zip.endsWith(".zip") || zip.endsWith(".ZIP")) {
+                setResponse(response, zip);
+                zipOut = new ZipOutputStream(response.getOutputStream());
+                for (String path : srcFilePath) {
+                    handlerFile(zip, zipOut, new File(path), "");
+                }
+                zipOut.close();
+            } else {
+                throw new RuntimeException("目标文件不是zip文件,无法压缩");
+            }
+        } catch (Exception e) {
+            logger.error("压缩文件异常", e);
+            throw new RuntimeException("压缩文件异常", e);
+        } finally {
+            IOUtils.closeQuietly(zipOut);
+        }
+    }
+
+    /**
+     * @param zip     压缩的目的地址
      * @param zipOut
-     * @param srcFile  被压缩的文件信息
-     * @param path  在zip中的相对路径
+     * @param srcFile 被压缩的文件信息
+     * @param path    在zip中的相对路径
      * @throws IOException
      */
-    private static void handlerFile(String zip , ZipOutputStream zipOut , File srcFile , String path) throws Exception{
+    private static void handlerFile(String zip, ZipOutputStream zipOut, File srcFile, String path) throws Exception {
         logger.info("compression file[" + srcFile.getName() + "], begin...");
-        if( !"".equals(path) && ! path.endsWith(File.separator)){
-            path += File.separator ;
+        if (!"".equals(path) && !path.endsWith(File.separator)) {
+            path += File.separator;
         }
-        if(!srcFile.getPath().equals(zip)) {
-            if( srcFile.isDirectory()) {//目录
-                File[] files = srcFile.listFiles() ;
-                if( files.length == 0 ){
+        if (!srcFile.getPath().equals(zip) && srcFile.exists()) {
+            if (srcFile.isDirectory()) {//目录
+                File[] files = srcFile.listFiles();
+                if (files.length == 0) {
                     zipOut.putNextEntry(new ZipEntry(path + srcFile.getName() + File.separator));
                     zipOut.closeEntry();
-                }else{
-                    for( File file : files ){
-                        handlerFile( zip ,zipOut , file , path + srcFile.getName());
+                } else {
+                    for (File file : files) {
+                        handlerFile(zip, zipOut, file, path + srcFile.getName());
                     }
                 }
             } else {//文件
@@ -94,41 +120,44 @@ public class ZipUtil {
                     IOUtils.closeQuietly(in);
                 }
             }
+            logger.info("compression file[" + srcFile.getName() + "], end ...");
+        } else {
+            logger.error("compression file[" + srcFile.getName() + "]" + "不存在或者文件名重复请确认");
         }
 
-        logger.info("compression file[" + srcFile.getName() + "], end ...");
     }
 
     /**
      * 解压缩ZIP文件，将ZIP文件里的内容解压到targetDIR目录下
      *
-     * @param zipPath 待解压缩的ZIP文件名
-     * @param targetDir  目标目录
+     * @param zipPath   待解压缩的ZIP文件名
+     * @param targetDir 目标目录
      */
     public static List<File> upzipFile(String zipPath, String targetDir) throws Exception {
-        return upzipFile( new File(zipPath) , targetDir ) ;
+        return upzipFile(new File(zipPath), targetDir);
     }
 
     /**
      * 对.zip文件进行解压缩
-     * @param zipFile  解压缩文件
-     * @param descDir  压缩的目标地址，如：D:\\测试 或 /mnt/d/测试
+     *
+     * @param zipFile 解压缩文件
+     * @param descDir 压缩的目标地址，如：D:\\测试 或 /mnt/d/测试
      * @return
      */
     @SuppressWarnings("rawtypes")
     public static List<File> upzipFile(File zipFile, String descDir) throws Exception {
-        List<File> _list = new ArrayList<File>() ;
+        List<File> _list = new ArrayList<File>();
         try {
-            ZipFile _zipFile = new ZipFile(zipFile , "GBK") ;
-            for(Enumeration entries = _zipFile.getEntries(); entries.hasMoreElements() ; ){
-                ZipEntry entry = (ZipEntry)entries.nextElement() ;
-                File _file = new File(descDir + File.separator + entry.getName()) ;
-                if( entry.isDirectory() ){
-                    _file.mkdirs() ;
-                }else{
-                    File _parent = _file.getParentFile() ;
-                    if( !_parent.exists() ){
-                        _parent.mkdirs() ;
+            ZipFile _zipFile = new ZipFile(zipFile, "GBK");
+            for (Enumeration entries = _zipFile.getEntries(); entries.hasMoreElements(); ) {
+                ZipEntry entry = (ZipEntry) entries.nextElement();
+                File _file = new File(descDir + File.separator + entry.getName());
+                if (entry.isDirectory()) {
+                    _file.mkdirs();
+                } else {
+                    File _parent = _file.getParentFile();
+                    if (!_parent.exists()) {
+                        _parent.mkdirs();
                     }
                     InputStream _in = null;
                     OutputStream _out = null;
@@ -153,7 +182,7 @@ public class ZipUtil {
             }
         } catch (IOException e) {
         }
-        return _list ;
+        return _list;
     }
 
     /**
@@ -181,13 +210,25 @@ public class ZipUtil {
             e.printStackTrace();
         }
     }
+
+    private static void setResponse(HttpServletResponse response, String zipFileName) {
+        response.reset(); // 重点突出
+        response.setCharacterEncoding("UTF-8"); // 重点突出
+        response.setContentType("application/x-msdownload"); // 不同类型的文件对应不同的MIME类型 // 重点突出
+        // 对文件名进行编码处理中文问题
+        zipFileName = new String(zipFileName.getBytes(), StandardCharsets.UTF_8);
+        // inline在浏览器中直接显示，不提示用户下载
+        // attachment弹出对话框，提示用户进行下载保存本地
+        // 默认为inline方式
+        response.setHeader("Content-Disposition", "attachment;filename=" + zipFileName);
+    }
+
     public static void main(String[] args) {
         String zipPath = "D:/logs/facefeature-web.zip";
+//        List<File> files = new ArrayList<>();
+//        files.add(new File("D:/logs/facefeature-web"));
+//        zipFile(zipPath, files);
 
-        List<File> files = new ArrayList<>();
-        files.add(new File("D:/logs/facefeature-web"));
-        zipFile(zipPath, files);
-
-        deletefile("D:\\test");
+//        deletefile("D:\\test");
     }
 }
