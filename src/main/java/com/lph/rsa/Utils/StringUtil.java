@@ -274,6 +274,8 @@ public class StringUtil extends StringUtils
 
   public static void main(String[] args){
       String nonceStr = createNonceStr(10);
+      int res = getLength("你好");
+      System.err.println(res);
 
       System.err.println(nonceStr);
   }
